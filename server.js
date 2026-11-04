@@ -1,12 +1,31 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJSDoc = require('swagger-jsdoc');
 
 const connectDB = require('./config/db');
 const routes = require('./routes');
+const baseOpenapiSpec = require('./docs/openapi');
+const routeOpenapiSpec = swaggerJSDoc({
+  definition: {
+    openapi: baseOpenapiSpec.openapi,
+    info: baseOpenapiSpec.info,
+    servers: baseOpenapiSpec.servers,
+    tags: baseOpenapiSpec.tags,
+    security: baseOpenapiSpec.security,
+    components: baseOpenapiSpec.components,
+  },
+  apis: [`${path.join(__dirname, 'routes').replace(/\\/g, '/') }/*.js`],
+});
+const openapiSpec = {
+  ...baseOpenapiSpec,
+  paths: { ...baseOpenapiSpec.paths, ...routeOpenapiSpec.paths },
+};
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -38,6 +57,13 @@ app.use(cookieParser());
 // Body parsing
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Interactive API documentation and the raw OpenAPI document
+app.get('/api-docs.json', (req, res) => res.json(openapiSpec));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec, {
+  explorer: true,
+  swaggerOptions: { persistAuthorization: true },
+}));
 
 // API Base Routes
 app.use('/api', routes);
