@@ -78,7 +78,7 @@ const login = async (req, res, next) => {
     next(error);
   }
 };
-const singup = async (req, res, next) => {
+const signup = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
@@ -212,6 +212,6 @@ module.exports = {
   logout,
   getMe,
   changePassword,
-  singup,
+  signup,
 };
 
