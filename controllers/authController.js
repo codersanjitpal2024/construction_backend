@@ -6,6 +6,7 @@ const User = require('../models/User');
 const COOKIE_NAME = 'token';
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
+
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(1, 'Password is required'),
@@ -77,6 +78,58 @@ const login = async (req, res, next) => {
     next(error);
   }
 };
+const singup = async (req, res, next) => {
+  try {
+    const { name, email, password } = req.body;
+
+    // Validate input
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name, email, and password are required',
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User with this email already exists',
+      });
+    }
+
+    // Hash password
+    const saltRounds = 12;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
+    // Create new user
+    const newUser = await User.create({
+      name: name.trim(),
+      email: normalizedEmail,
+      passwordHash,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'User created successfully',
+      user: {
+        id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+      },
+    });
+
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+}
 
 // @desc    Admin logout
 // @route   POST /api/auth/logout
@@ -159,5 +212,6 @@ module.exports = {
   logout,
   getMe,
   changePassword,
+  singup,
 };
 

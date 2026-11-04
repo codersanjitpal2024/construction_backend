@@ -6,6 +6,7 @@ const {
   logout,
   getMe,
   changePassword,
+  singup,
 } = require('../controllers/authController');
 const { requireAuth } = require('../middleware/authMiddleware');
 
@@ -23,6 +24,7 @@ const loginLimiter = rateLimit({
 
 // Public auth routes
 router.post('/login', loginLimiter, login);
+router.post('/signup', singup);
 
 // Protected auth routes
 router.post('/logout', requireAuth, logout);
