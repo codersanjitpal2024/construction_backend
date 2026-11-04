@@ -2,7 +2,11 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const mongoURI = 'mongodb+srv://sanjitpal132_db_user:0bd4miMKA98xf3LS@cluster0.brj5ib0.mongodb.net/';
+    const mongoURI = process.env.MONGODB_URI;
+    if (!mongoURI) {
+      throw new Error('MONGODB_URI is not configured. Add it to the server environment.');
+    }
+
     const conn = await mongoose.connect(mongoURI);
 
     console.log(`[MongoDB] Connected successfully to host: ${conn.connection.host}, database: ${conn.connection.name}`);

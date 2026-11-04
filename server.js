@@ -9,6 +9,7 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerJSDoc = require('swagger-jsdoc');
 
 const connectDB = require('./config/db');
+const ensureAdminFromEnv = require('./services/adminSeeder');
 const routes = require('./routes');
 const baseOpenapiSpec = require('./docs/openapi');
 const routeOpenapiSpec = swaggerJSDoc({
@@ -29,9 +30,6 @@ const openapiSpec = {
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
-
-// Connect to Database
-connectDB();
 
 // Security HTTP headers
 app.use(helmet());
@@ -96,9 +94,19 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`[Server] Running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
-  console.log(`[Server] Health check: http://localhost:${PORT}/api/health`);
+const startServer = async () => {
+  await connectDB();
+  await ensureAdminFromEnv();
+
+  app.listen(PORT, () => {
+    console.log(`[Server] Running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+    console.log(`[Server] Health check: http://localhost:${PORT}/api/health`);
+  });
+};
+
+startServer().catch((error) => {
+  console.error('[Server Startup Error]', error.message);
+  process.exit(1);
 });
 
 module.exports = app;
