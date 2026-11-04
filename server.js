@@ -60,10 +60,23 @@ app.use(express.urlencoded({ extended: true }));
 
 // Interactive API documentation and the raw OpenAPI document
 app.get('/api-docs.json', (req, res) => res.json(openapiSpec));
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec, {
-  explorer: true,
-  swaggerOptions: { persistAuthorization: true },
-}));
+app.use(
+  '/api-docs',
+  // Swagger UI initializes with an inline script; allow it only on the docs page.
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        'script-src': ["'self'", "'unsafe-inline'"],
+        'style-src': ["'self'", "'unsafe-inline'"],
+      },
+    },
+  }),
+  swaggerUi.serve,
+  swaggerUi.setup(openapiSpec, {
+    explorer: true,
+    swaggerOptions: { persistAuthorization: true },
+  })
+);
 
 // API Base Routes
 app.use('/api', routes);
